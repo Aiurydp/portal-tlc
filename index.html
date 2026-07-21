@@ -212,7 +212,7 @@
 <script>
 const SUPABASE_URL = 'https://mrtucxsrfgavokezgbsy.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_PocUFywXj2645Ex5-lD0CA_hk5WOy9l';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const MEMBERS = ['Camila','Ingredy','Aiury','Marysol','Vanessa','Gabriel','Isabela','Nicoli','Jessica','Renato'];
 const COLORS = [
@@ -237,7 +237,7 @@ function getInitials(name) { return name.slice(0,2).toUpperCase(); }
 
 // AUTH
 async function loginGoogle() {
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.href }
   });
@@ -245,7 +245,7 @@ async function loginGoogle() {
 }
 
 async function logout() {
-  await supabase.auth.signOut();
+  await sb.auth.signOut();
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('main-app').style.display = 'none';
   currentUser = null;
@@ -343,7 +343,7 @@ async function handleFiles(files) {
   let done = 0;
   for (const f of arr) {
     const path = getPath(currentMember, currentTab, `${Date.now()}_${f.name}`);
-    const { error } = await supabase.storage.from('midias').upload(path, f);
+    const { error } = await sb.storage.from('midias').upload(path, f);
     if (error) { showToast('❌ Erro: ' + error.message); }
     else { done++; fill.style.width = (done/arr.length*100) + '%'; }
   }
@@ -357,7 +357,7 @@ async function handleFiles(files) {
 
 async function loadFiles() {
   const path = getPath(currentMember, currentTab);
-  const { data, error } = await supabase.storage.from('midias').list(path, { limit: 100 });
+  const { data, error } = await sb.storage.from('midias').list(path, { limit: 100 });
   const grid = document.getElementById('files-grid');
   const empty = document.getElementById('empty-state');
   if (error || !data || data.length === 0) {
@@ -386,7 +386,7 @@ async function loadFiles() {
 }
 
 async function downloadFile(path, name) {
-  const { data, error } = await supabase.storage.from('midias').download(path);
+  const { data, error } = await sb.storage.from('midias').download(path);
   if (error) { showToast('❌ Erro ao baixar'); return; }
   const url = URL.createObjectURL(data);
   const a = document.createElement('a');
@@ -398,7 +398,7 @@ async function updateTotalCount() {
   let total = 0;
   for (const m of MEMBERS) {
     for (const tab of ['brutas','editadas','videos']) {
-      const { data } = await supabase.storage.from('midias').list(getPath(m, tab), { limit: 1000 });
+      const { data } = await sb.storage.from('midias').list(getPath(m, tab), { limit: 1000 });
       if (data) total += data.filter(f => f.name && f.name !== '.emptyFolderPlaceholder').length;
     }
   }
@@ -430,11 +430,11 @@ dropZone.addEventListener('drop', e => {
 });
 
 // INIT
-supabase.auth.getSession().then(async ({ data: { session } }) => {
+sb.auth.getSession().then(async ({ data: { session } }) => {
   if (session?.user) await initApp(session.user);
 });
 
-supabase.auth.onAuthStateChange(async (event, session) => {
+sb.auth.onAuthStateChange(async (event, session) => {
   if (session?.user) await initApp(session.user);
   else {
     document.getElementById('login-screen').style.display = 'flex';
